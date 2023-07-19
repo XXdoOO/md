@@ -1,5 +1,5 @@
 const regexObject = {
-  headline: /^(\#{1,6})([^\#\n]+)$/m,
+  headline: /^(#{1,6}) (.+)/m,
   code: /\s\`\`\`\n?([^`]+)\`\`\`/g,
   hr: /^(?:([\*\-_] ?)+)\1\1$/gm,
   lists: /^(\s*)(-|\d\.) (.*)$/gm,
@@ -13,47 +13,36 @@ const regexObject = {
   url: /<([a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[\-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)?)>/g
 }
 
-let text
-const editArea = document.querySelector('#edit-p')
-const previewArea = document.querySelector('#preview-area')
+const p = document.querySelector('p[contenteditable="plaintext-only"]')
 
-// 使用textNode内置的替换引擎,将 < > $等字符替换. 但不会替换' 和 "
-const parse = function (str) {
-  'use strict';
-  var div = document.createElement('div');
-  div.appendChild(document.createTextNode(str));
-  str = div.innerHTML
-  div = undefined
-  return str
-}
+p.onblur = function () {
+  let match, level, text = this.textContent
 
-const parseAll = function () {
-  let match, html
+  console.log(this.text);
 
   for (let ro in regexObject) {
     while ((match = regexObject[ro].exec(text)) !== null) {
       console.log(match);
 
       if (ro == 'headline') {
-        count = match[1].length;
-        text = text.replace(match[0], `<h${count} contenteditable>${parse(match[2].trim())}</h${count}>`).trim()
+        level = match[1].length
+
+        text = text.replace(match[0], `<h${level} contenteditable="plaintext-only">${(match[2].trim())}</h${level}>`).trim()
       } else if (ro == 'lists') {
         if (match[2] == '-') {
-          text = text.replace(match[0], `<li contenteditable>${match[3]}</li>`)
+          text = text.replace(match[0], `<li contenteditable="plaintext-only">${match[3]}</li>`)
         }
       }
-
-
     }
-
     console.log(text);
   }
-
-  previewArea.innerHTML = text
 }
 
-editArea.oninput = function () {
-  text = editArea.textContent
 
-  parseAll()
+
+p.onkeydown = function (e) {
+  if (e.keyCode === 13) {
+    console.log(444);
+    // e.preventDefault();
+  }
 }
