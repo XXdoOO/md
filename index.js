@@ -13,36 +13,60 @@ const regexObject = {
   url: /<([a-zA-Z0-9@:%_\+.~#?&\/=]{2,256}\.[a-z]{2,4}\b(\/[\-a-zA-Z0-9@:%_\+.~#?&\/\/=]*)?)>/g
 }
 
-const p = document.querySelector('p[contenteditable="plaintext-only"]')
+const ps = document.querySelectorAll('p[contenteditable="plaintext-only"]')
 
-p.onblur = function () {
-  let match, level, text = this.textContent
+for (let p of ps) {
+  p.oninput = function () {
+    let match, level, text = this.textContent
 
-  console.log(this.text);
+    for (let ro in regexObject) {
+      while ((match = regexObject[ro].exec(text)) !== null) {
+        console.log(match);
 
-  for (let ro in regexObject) {
-    while ((match = regexObject[ro].exec(text)) !== null) {
-      console.log(match);
+        if (ro == 'headline') {
+          level = match[1].length
 
-      if (ro == 'headline') {
-        level = match[1].length
-
-        text = text.replace(match[0], `<h${level} contenteditable="plaintext-only">${(match[2].trim())}</h${level}>`).trim()
-      } else if (ro == 'lists') {
-        if (match[2] == '-') {
-          text = text.replace(match[0], `<li contenteditable="plaintext-only">${match[3]}</li>`)
+          text = text.replace(match[0], `<h${level} contenteditable="plaintext-only">${(match[2].trim())}</h${level}>`).trim()
+        } else if (ro == 'lists') {
+          if (match[2] == '-') {
+            text = text.replace(match[0], `<li contenteditable="plaintext-only">${match[3]}</li>`)
+          }
         }
       }
     }
     console.log(text);
+
+    console.log(this);
+
+    const parent = this.parentNode
+
+    const parser = new DOMParser().parseFromString(text).body
+
+    const newItem = document.createElement('div').innerHTML
+    newItem.innerHTML = this.innerHTML
+
+    console.log(newItem);
+
+    parent.replaceChild(newItem, this)
   }
-}
 
+  p.onkeydown = function (e) {
+    if (e.keyCode === 13) {
+      let newItem
+      const tagName = this.tagName
 
+      console.log(tagName);
+      if (tagName == 'li') {
+        newItem = this.cloneNode()
+      } else {
+        newItem = document.createElement('p')
+        newItem.setAttribute('contenteditable', "plaintext-only")
+      }
 
-p.onkeydown = function (e) {
-  if (e.keyCode === 13) {
-    console.log(444);
-    // e.preventDefault();
+      this.parentNode.insertBefore(newItem, this.nextSibling)
+
+      newItem.focus()
+      e.preventDefault()
+    }
   }
 }
